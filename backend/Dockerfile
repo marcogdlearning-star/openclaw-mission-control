@@ -8,43 +8,43 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # System deps (keep minimal)
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates git 
 
-# RUN rm -rf /var/lib/apt/lists/*
+RUN rm -rf /var/lib/apt/lists/*
 
 # Install uv (https://github.com/astral-sh/uv)
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.local/bin:${PATH}"
 
-WORKDIR /app
+#WORKDIR /app
 
 # --- deps layer ---
 FROM base AS deps
 
 # Copy only dependency metadata first for better build caching
 # NOTE: compose builds backend with repo-root context, so files live under /backend.
-# COPY backend/pyproject.toml backend/uv.lock app/
+ COPY backend/pyproject.toml backend/uv.lock ./
 
 # Create venv and sync deps (including runtime)
-# RUN uv sync --frozen --no-dev
+RUN uv sync --frozen --no-dev
 
 # --- runtime ---
  FROM base AS runtime
 
 # Copy virtual environment from deps stage
-COPY --from=deps /app/.venv /app/.venv
-ENV PATH="/app/.venv/bin:${PATH}"
+COPY --from=deps .venv .venv
+ENV PATH=".venv/bin:${PATH}"
 
 # Copy app source
-# COPY backend/migrations ./migrations
-# COPY backend/alembic.ini ./alembic.ini
-# COPY backend/app ./app
+COPY backend/migrations ./migrations
+COPY backend/alembic.ini ./alembic.ini
+COPY backend/app ./
 
 # Copy provisioning templates.
 # In-repo these live at `backend/templates/`; runtime path is `/app/templates`.
-# COPY backend/templates ./templates
+COPY backend/templates ./templates
 
 # Copy worker scripts.
 # In-repo these live at `scripts/`; runtime path is `/app/scripts`.
-# COPY scripts ./scripts
+COPY scripts ./scripts
 
 # Default API port
 EXPOSE 8000
