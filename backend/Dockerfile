@@ -23,7 +23,7 @@ FROM base AS deps
 
 # Copy only dependency metadata first for better build caching
 # NOTE: compose builds backend with repo-root context, so files live under /backend.
-COPY backend/pyproject.toml backend/uv.lock ./
+COPY backend/pyproject.toml backend/uv.lock app/
 
 # Create venv and sync deps (including runtime)
 RUN uv sync --frozen --no-dev
